@@ -1,6 +1,10 @@
 import { RastroJS } from './rastrojs';
-import { TypesEnum } from './enums/types.enums';
 
-export { RastroJS, TypesEnum }
-export const rastro = new RastroJS();
-export default rastro;
+export = {
+    RastroJS,
+    get track() {
+        const instance = new RastroJS();
+        return instance.track.bind(instance);
+    },
+    isValidOrderCode: RastroJS.isValidOrderCode,
+};

@@ -174,7 +174,7 @@ export enum TypesEnum {
     MY = 'telegrama internacional entrante',
     MZ = 'telegrama via correios on line',
     NE = 'tele sena resgatada',
-    NX = 'edei encomenda nao urgente',
+    NX = 'edei encomenda não urgente',
     OA = 'encomenda sedex (etiq logica)',
     OB = 'encomenda sedex (etiq logica)',
     OC = 'encomenda sedex (etiq logica)',
@@ -271,4 +271,5 @@ export enum TypesEnum {
     XM = 'sedex mundi',
     XR = 'objeto internacional (pps tributado)',
     XX = 'objeto internacional (pps tributado)',
+    UNKNOWN = 'desconhecido',
 }

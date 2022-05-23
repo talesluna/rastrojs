@@ -13,17 +13,18 @@ declare module 'rastrojs' {
         postedAt?: Date;
         updatedAt?: Date;
         isInvalid?: boolean;
-        error?: 'invalid_code' | 'not_found';
+        error?: string;
     }
-    
+
+    export function track(codes: string[]): Promise<Tracking[]>;
+    export function track(...codes: string[]): Promise<Tracking[]>;
+    export function isValidOrderCode(code: string): boolean;
+
     export class RastroJS {
-        track: (codes: string | string[]) => Promise<Tracking[]>;
+        public track: typeof track;
         private requestObject;
         private parseResponse;
-        private readonly uri;
-        static isValidOrderCode: (code: string) => boolean;
+        static isValidOrderCode: typeof isValidOrderCode;
     }
-    
-    export const rastro: RastroJS;
 
 }
