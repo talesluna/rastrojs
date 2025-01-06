@@ -1,14 +1,16 @@
 declare module 'rastrojs' {
 
+    export interface TrackInfo {
+        locale: string;
+        status: string;
+        observation: string;
+        trackedAt: Date;
+    }
+
     export interface Tracking {
         code: string;
         type?: string;
-        tracks?: {
-            locale: string;
-            status: string;
-            observation: string;
-            trackedAt: Date;
-        }[];
+        tracks?: TrackInfo[];
         isDelivered?: boolean;
         postedAt?: Date;
         updatedAt?: Date;

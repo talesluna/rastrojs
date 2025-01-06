@@ -1,7 +1,7 @@
 import url from 'url';
 import https from 'https';
 
-import { Tracking } from 'rastrojs';
+import { TrackInfo, Tracking } from 'rastrojs';
 import { TypesEnum } from './enums/types.enums';
 
 /**
@@ -58,34 +58,36 @@ export class RastroJS {
                 error: 'invalid_code'
             });
     
-            const searchData = `objetos=${code}`;
             const request = https.request(
-                this.uri, 
+                this.uri.toString().concat(`/tracking/${code}`), 
                 {
-                    method: 'POST',
+                    method: 'GET',
+                    timeout: 1000,
                     headers: {
-                        'User-Agent': this.userAgent,
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Content-Length': searchData.length,
+                        'user-agent': this.userAgent,
+                        'accept': '*/*',
+                        'accept-language': 'pt-BR,pt;q=0.9',
+                        'cache-control': 'no-cache'
                     }
                 },
                 response => {
-    
-                    if (response.statusCode !== 200) {
-                        const error = response.statusMessage.toLowerCase().replace(/ /g, '_');
-                        return resolve({ code, isInvalid: true, error });
+                    if (response.statusCode === 200) {
+                        let data = '';
+                        response.on('data', chunk => data += chunk);
+                        return response.on('end', () => resolve(this.parseResponse(data, code)));
                     }
-    
-                    let html = '';
-                    response.setEncoding('utf-8')
-                    response.on('data', chunk => html += chunk);
-                    response.on('error', error => resolve({ code, isInvalid: true, error: error.message }));
-                    response.on('end', () => resolve(this.parseResponse(html, code)));
-    
+
+                    response.destroy();
+
+                    if (response.statusCode === 500) {
+                        return resolve({ code, isInvalid: true, error: 'not_found' });
+                    }
+                    
+                    const error = response.statusMessage.toLowerCase().replace(/ /g, '_');
+                    resolve({ code, isInvalid: true, error });
                 }
             );
-    
-            request.write(searchData);
+
             request.on('error', error => resolve({ code, isInvalid: true, error: error.message }));
             request.end();
     
@@ -96,77 +98,36 @@ export class RastroJS {
     /**
      * Parse the request response and create tracking object
      *
-     * @param  {string} html
+     * @param  {string} data
      */
-    private parseResponse(html: string, code: string): Tracking {
+    private parseResponse(data: string, code: string): Tracking {
 
-        // Strip html tags, keep only text
-        const onlyText = html.replace(/<\/?[^>]+(>|$)/g, '');
+        const tracks: TrackInfo[] = JSON.parse(data).timeline.map(t => {
+            const locale = t.from.split(',').pop().trim().replace('-', '/').toLowerCase();
+            const status = t.title.toLowerCase();
+            const observation = t.description.toLowerCase();
+            const trackedAt = new Date(t.date);
 
-        // if the tracking code is not present on text, this code not found
-        if (!onlyText.includes(code.toUpperCase()) && !onlyText.includes(code.toLowerCase())) {
-            return {
-                code,
-                isInvalid: true,
-                error: 'not_found'
-            };
-        }
-
-        const lines = onlyText
-            .replace(/\n|\r|\t/g, '')
-            .replace(/&nbsp;/g, ' ')
-            .split(/(\d+\/\d+\/\d+)/g)
-            .slice(3)
-            .filter(l => l.length);
-
-        const tracks = [];
-
-        lines.forEach((l, i) => {
-            if (i%2 != 0) {
-                const date = lines[i-1];
-                const [time, locale, status, ...observation] = l.trim().toLowerCase().split(/\s{2,}/g);
-                tracks.push({
-                    locale: locale.replace(/\/$/g, '').trim(),
-                    status,
-                    observation: observation.length ? observation.join(' ') : null,
-                    trackedAt: new Date(date.split('/').reverse().join('-').concat(` ${time} -3`)),
-                });
-            }
+            return { locale, status, observation, trackedAt }
         });
-
-        tracks.reverse();
-        const [firstTrack, lastTrack] = [tracks[0], tracks[tracks.length - 1]];
 
         return {
             code,
-            type: TypesEnum[code.toUpperCase().slice(0, 2)] || TypesEnum.UNKNOWN,
-            isDelivered: lastTrack.status.includes('objeto entregue'),
-            postedAt: firstTrack.trackedAt,
-            updatedAt: lastTrack.trackedAt,
             tracks,
+            postedAt: tracks[tracks.length-1].trackedAt,
+            updatedAt: tracks[0].trackedAt,
+            isDelivered: tracks[0].status.includes('objeto entregue'),
+            type: TypesEnum[code.toUpperCase().slice(0, 2)] || TypesEnum.UNKNOWN,
         };
 
     }
 
 
     /**
-     * The magic
+     * The other magic
      */
     private get uri() {
-        return new url.URL(this.decoder(
-            `
-            \x61\x48\x52\x30\x63\x48\x4D\x36\x4C\x79
-            \x39\x33\x64\x33\x63\x79\x4C\x6D\x4E\x76
-            \x63\x6E\x4A\x6C\x61\x57\x39\x7A\x4C\x6D
-            \x4E\x76\x62\x53\x35\x69\x63\x69\x39\x7A
-            \x61\x58\x4E\x30\x5A\x57\x31\x68\x63\x79
-            \x39\x79\x59\x58\x4E\x30\x63\x6D\x56\x68
-            \x62\x57\x56\x75\x64\x47\x38\x76\x63\x6D
-            \x56\x7A\x64\x57\x78\x30\x59\x57\x52\x76
-            \x58\x33\x4E\x6C\x62\x57\x4E\x76\x62\x6E
-            \x52\x6C\x62\x6E\x51\x75\x59\x32\x5A\x74
-            `,
-        ));
+        return new url.URL(this.decoder('\x61\x48\x52\x30\x63\x48\x4d\x36\x4c\x79\x39\x68\x63\x47\x6b\x75\x63\x32\x6c\x30\x5a\x58\x4a\x68\x63\x33\x52\x79\x5a\x57\x6c\x76\x4c\x6d\x4e\x76\x62\x53\x35\x69\x63\x67\x3d\x3d'));
     }
 
     /**
