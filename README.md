@@ -1,7 +1,7 @@
 # RastroJs
 Uma biblioteca Nodejs para rastreamento de encomendas nos Correios.
 
-*Este projeto não é oficial dos Correios e apesar de se alimentar de um sistema web legítimo dos Correios este não realiza integrações com o webservice dos Correios.*
+*Este projeto não é oficial dos Correios e não realiza integrações com o webservice dos Correios.*
 
 ![](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white)
 ![](https://img.shields.io/npm/l/rastrojs?color=blue&label=License)
