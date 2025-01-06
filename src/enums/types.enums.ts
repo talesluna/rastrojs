@@ -182,6 +182,7 @@ export enum TypesEnum {
     OF = 'etiqueta lógica sedex',
     OG = 'etiqueta lógica sedex',
     OH = 'etiqueta lógica sedex',
+    OY = 'encomenda sedex (etiq física)',
     PA = 'passaporte',
     PB = 'encomenda pac - não urgente',
     PC = 'encomenda pac a cobrar',
